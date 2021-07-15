@@ -1,0 +1,84 @@
+kind: Secret
+apiVersion: v1
+metadata:
+  name: postgres-connection-secret
+data:
+  POSTGRES_USER: cG9zdGdyZXM=
+  POSTGRES_DB: YXV0aGVudGljYXRpb25kYg==
+  POSTGRES_PASSWORD: YWJkZW5vdXI5Nw==
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: ms-authentication-vol
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 256Mi
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: ms-authentication-db-deployment
+  labels:
+    app: ms-authentication-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-authentication-db
+  template:
+    metadata:
+      labels:
+        app: ms-authentication-db
+    spec:
+      containers:
+        - name: ms-authentication-db
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-connection-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-connection-secret
+                  key: POSTGRES_DB
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-connection-secret
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: storage
+              mountPath: /var/lib/postgresql/data
+            - name: secret-volume
+              readOnly: true
+              mountPath: /etc/secrets
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: ms-authentication-vol
+        - name: secret-volume
+          secret:
+            secretName: postgres-connection-secret
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: ms-authentication-db
+spec:
+  selector:
+    app: ms-authentication-db
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort : 5432

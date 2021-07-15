@@ -1,0 +1,37 @@
+version: '3.5'
+services:
+  ms-authentication:
+    container_name: ms-authentication
+    build:
+      context: .
+    image: abdenourbarache/trading-ms-authentication:2.0
+    expose:
+      - 8000
+    ports:
+      - 8000:8000
+    networks:
+      - ms-authentication-network
+      - trading-app-network
+    depends_on:
+      - ms-authentication-db
+  ms-authentication-db:
+    container_name: ms-authentication-db
+    image: postgres
+    env_file:
+      - database.env
+    expose:
+      - 5432
+    networks:
+      - ms-authentication-network
+    volumes:
+      - ms-authentication-db-volume:/var/lib/postgresql/data
+networks:
+  ms-authentication-network:
+    driver: bridge
+    name : ms-authentication-network
+  trading-app-network:
+    driver: bridge
+    name : trading-app-network
+volumes:
+  ms-authentication-db-volume:
+    name : ms-authentication-db-volume

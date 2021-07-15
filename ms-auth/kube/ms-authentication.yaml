@@ -1,0 +1,34 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: ms-authentication-deployment
+  labels:
+    app: ms-authentication
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-authentication
+  template:
+    metadata:
+      labels:
+        app: ms-authentication
+    spec:
+      containers:
+        - name: ms-authentication
+          image: abdenourbarache/trading-ms-authentication:3.0
+          ports:
+            - containerPort: 8000
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: ms-authentication
+spec:
+  type: LoadBalancer
+  selector:
+    app: ms-authentication
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort : 8000
